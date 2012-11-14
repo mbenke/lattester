@@ -1,0 +1,12 @@
+Name:		cabal
+Version:	0.1
+Author:		Marcin Benke
+Build-Type:	Simple
+Cabal-Version:  >=1.2
+
+executable tester
+  build-depends: 
+    base >= 4,
+    text,
+    shelly
+  main-is: Tester.hs
