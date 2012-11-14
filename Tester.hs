@@ -9,6 +9,8 @@ import Data.Text.Lazy as LT
 import Data.String(IsString,fromString)
 default (LT.Text)
   
+type MyResult a = Either Text a
+
 infix 3 `orDie`
 orDie :: Sh Bool -> Text -> Sh ()
 c `orDie` msg = unlessM c (errorExit msg)
@@ -40,13 +42,35 @@ tester projectDir testDir = shelly $ verbosely $ do
   tar opts archive
   run_ "make" []
   test_f "latc" `orDie` "latc executable not found"
-  testGoodOne $ goodDir </> "core001.lat"
+  b <- testGoodOne $ goodDir </> "core001.lat"
+  if b then echo "Good tests passed" else echo "Good tests failed"
+  return ()
   
-testGoodOne :: FilePath -> Sh ()
+testGoodOne :: FilePath -> Sh Bool
 testGoodOne fp = do
   ft <- toTextWarn fp
-  run_ "./latc" [ft]
+  silently $ run_ "./latc" [ft]
+  trace "stderr:"
+  lastStderr >>= trace
+  lastStderrHeadIs "OK"
   
+lastStderrHead :: Sh (MyResult Text)
+lastStderrHead = do
+  text <- lastStderr
+  return $ case LT.lines text of
+    [] -> Left "empty stderr"
+    (l:_) -> Right l
+    
+lastStderrHeadIs :: Text -> Sh Bool
+lastStderrHeadIs expected = do
+  text <- lastStderr
+  case LT.lines text of
+    [] -> echo "empty stderr" >> return False
+    (got:_) | got == expected -> return True
+            | otherwise -> do
+                echo $ unwords ["Expected",expected,"got",got]
+                return False
+                
 findArchive :: Sh (Text,FilePath)
 findArchive = do
   allFiles <- ls "."
