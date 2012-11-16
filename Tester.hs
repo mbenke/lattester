@@ -7,6 +7,8 @@ import Prelude hiding(FilePath,unwords)
 import System.Environment
 import Data.Text.Lazy as LT
 import Data.String(IsString,fromString)
+import Control.Monad(forM)
+
 default (LT.Text)
   
 type MyResult a = Either Text a
@@ -31,29 +33,51 @@ main = do
 tester :: FilePath -> FilePath -> IO () 
 tester projectDir testDir = shelly $ verbosely $ do
   test_d projectDir `orDie` "No project directory"
-  requireDir testDir 
-  let goodDir = testDir </> "good"
-  requireDir goodDir
-  let badDir = testDir </> "bad"
-  requireDir badDir
+  requireDir (testDir </> "good") 
+  let newTestDir = projectDir </> "testerTests"
+  cp_r testDir newTestDir
   cd projectDir
   (opts, archive) <- findArchive 
   inspect archive
   tar opts archive
   run_ "make" []
   test_f "latc" `orDie` "latc executable not found"
-  b <- testGoodOne $ goodDir </> "core001.lat"
-  if b then echo "Good tests passed" else echo "Good tests failed"
+  testFrontend newTestDir
   return ()
   
+testFrontend :: FilePath -> Sh ()
+testFrontend newTestDir = do
+  let goodDir = newTestDir </> "good"
+  requireDir goodDir
+  let badDir = newTestDir </> "bad"
+  requireDir badDir
+  goodFiles <- (ls goodDir >>= return . havingExt "lat")
+  results <- forM goodFiles testGoodOne
+  if (and results) then echo "Good tests passed" 
+                   else echo "Good tests failed"  
+
+  badFiles <- (ls badDir >>= return . havingExt "lat")
+  results <-   errExit False (forM badFiles testBadOne)
+  if (and results) then echo "Bad tests passed" 
+                   else echo "Bad tests failed"
+
 testGoodOne :: FilePath -> Sh Bool
 testGoodOne fp = do
   ft <- toTextWarn fp
-  silently $ run_ "./latc" [ft]
+  cmd "./latc" ft
   trace "stderr:"
   lastStderr >>= trace
   lastStderrHeadIs "OK"
-  
+
+testBadOne :: FilePath -> Sh Bool
+testBadOne fp = do
+  ft <- toTextWarn fp
+  -- echo "Expect ERROR"
+  cmd "./latc" ft
+  trace "stderr:"
+  lastStderr >>= trace
+  lastStderrHeadIs "ERROR"
+
 lastStderrHead :: Sh (MyResult Text)
 lastStderrHead = do
   text <- lastStderr
@@ -93,4 +117,7 @@ isSuffixOfTFP t fp = LT.isSuffixOf t (toTextIgnore fp)
 tar :: Text -> FilePath -> Sh ()
 tar opts archive = do
   a <- toTextWarn archive
-  run_ (fromText "tar") [opts,a]
+  cmd "tar" opts a
+  
+havingExt :: Text -> [FilePath] -> [FilePath]
+havingExt ext = Prelude.filter (hasExt ext)
