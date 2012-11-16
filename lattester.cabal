@@ -4,7 +4,7 @@ Author:		Marcin Benke
 Build-Type:	Simple
 Cabal-Version:  >=1.2
 
-executable tester
+executable lattester
   build-depends: 
     base >= 4,
     text,
