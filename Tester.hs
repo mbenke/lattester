@@ -101,7 +101,7 @@ findArchive = do
   echo "All project files:"
   inspect allFiles
   let archives = [(opts, s) | 
-                    (opts, ext) <- [("zxf", ".tar.gz"), ("zxf", ".tgz"), ("jxf", ".tar.bz2"), ("jxf", ".tar.bzip2"), ("xf", ".tar")],
+                    (opts, ext) <- [("zxf", ".tar.gz"), ("zxf", ".tgz"), ("jxf", ".tar.bz2"), ("jxf", ".tar.bzip2"), ("jxf", ".tbz"), ("xf", ".tar")],
                     s <- Prelude.filter (isSuffixOfTFP ext) allFiles]
   echo "Archives:"
   inspect archives
