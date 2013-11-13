@@ -5,7 +5,8 @@ module Main where
 import Shelly
 import Prelude hiding(FilePath,unwords)
 import System.Environment
-import Data.Text.Lazy as LT
+import qualified Data.Text as LT
+import Data.Text(Text)
 import Data.String(IsString,fromString)
 import Control.Monad(forM)
 
@@ -92,7 +93,7 @@ lastStderrHeadIs expected = do
     [] -> echo "empty stderr" >> return False
     (got:_) | got == expected -> return True
             | otherwise -> do
-                echo $ unwords ["Expected",expected,"got",got]
+                echo $ LT.unwords ["Expected",expected,"got",got]
                 return False
                 
 findArchive :: Sh (Text,FilePath)
