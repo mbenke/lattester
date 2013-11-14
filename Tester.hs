@@ -43,7 +43,8 @@ tester projectDir testDir = shelly $ verbosely $ do
   tar opts archive
   run_ "make" []
   test_f "latc" `orDie` "latc executable not found"
-  testFrontend newTestDir
+  let relTestDir = "testerTests"
+  testFrontend relTestDir
   return ()
   
 testFrontend :: FilePath -> Sh ()
@@ -64,17 +65,19 @@ testFrontend newTestDir = do
 
 testGoodOne :: FilePath -> Sh Bool
 testGoodOne fp = do
+  latc <- absPath "latc"
   ft <- toTextWarn fp
-  cmd "./latc" ft
+  cmd latc ft
   trace "stderr:"
   lastStderr >>= trace
   lastStderrHeadIs "OK"
 
 testBadOne :: FilePath -> Sh Bool
 testBadOne fp = do
+  latc <- absPath "latc"
   ft <- toTextWarn fp
   -- echo "Expect ERROR"
-  cmd "./latc" ft
+  cmd latc ft
   trace "stderr:"
   lastStderr >>= trace
   lastStderrHeadIs "ERROR"
@@ -102,7 +105,7 @@ findArchive = do
   echo "All project files:"
   inspect allFiles
   let archives = [(opts, s) | 
-                    (opts, ext) <- [("zxf", ".tar.gz"), ("zxf", ".tgz"), ("jxf", ".tar.bz2"), ("jxf", ".tar.bzip2"), ("jxf", ".tbz"), ("xf", ".tar")],
+                    (opts, ext) <- [("xf", ".tar.gz"), ("xf", ".tgz"), ("xf", ".tar.bz2"), ("xf", ".tar.bzip2"), ("xf", ".tbz"), ("xf", ".tar")],
                     s <- Prelude.filter (isSuffixOfTFP ext) allFiles]
   echo "Archives:"
   inspect archives
