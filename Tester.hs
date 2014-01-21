@@ -28,7 +28,7 @@ main = do
   args <- getArgs
   case args of
     [projectDir, testDir] -> tester (fromString projectDir) (fromString testDir)
-    _ -> print "Usage: tester projectDir testDir"
+    _ -> putStrLn "Usage: tester projectDir testDir"
     
 
 tester :: FilePath -> FilePath -> IO () 
