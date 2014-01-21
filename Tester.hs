@@ -54,7 +54,13 @@ testFrontend :: FilePath -> Sh ()
 testFrontend newTestDir = simpleTest "latc" newTestDir
 
 testBackend :: FilePath -> FilePath -> Sh ()
-testBackend exe newTestDir = simpleTest exe newTestDir
+testBackend exe newTestDir = do
+  let goodDir = newTestDir </> "good"
+  requireDir goodDir
+  goodFiles <- (ls goodDir >>= return . havingExt "lat")
+  results <- forM goodFiles (testGoodOne exe)
+  if (and results) then echo "Good tests passed" 
+                   else echo "Good tests failed"  
 
 simpleTest exe newTestDir = do
   let goodDir = newTestDir </> "good"
